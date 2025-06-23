@@ -77,6 +77,50 @@ if uploaded_file:
         selected_year = st.multiselect("Selection Year", options=sorted(df['Selection Year'].dropna().unique()))
 
     df_filtered = df.copy()
+
+    st.subheader("🔍 סינון מתקדם לפי תנאים (אופציונלי)")
+    activate_filter = st.checkbox("הפעל סינון מתקדם")
+
+    if activate_filter:
+        all_columns = df_filtered.columns.tolist()
+        selected_column = st.selectbox("בחר עמודה", options=all_columns)
+
+        if pd.api.types.is_numeric_dtype(df_filtered[selected_column]):
+            condition = st.selectbox("תנאי", [">", "<", ">=", "<=", "==", "!=", "לא ריק"])
+            if condition != "לא ריק":
+                try:
+                    value = float(st.text_input("ערך מספרי לסינון"))
+                    if condition == ">":
+                        df_filtered = df_filtered[df_filtered[selected_column] > value]
+                    elif condition == "<":
+                        df_filtered = df_filtered[df_filtered[selected_column] < value]
+                    elif condition == ">=":
+                        df_filtered = df_filtered[df_filtered[selected_column] >= value]
+                    elif condition == "<=":
+                        df_filtered = df_filtered[df_filtered[selected_column] <= value]
+                    elif condition == "==":
+                        df_filtered = df_filtered[df_filtered[selected_column] == value]
+                    elif condition == "!=":
+                        df_filtered = df_filtered[df_filtered[selected_column] != value]
+                except:
+                    st.warning("נא להזין ערך מספרי חוקי.")
+            else:
+                df_filtered = df_filtered[df_filtered[selected_column].notnull()]
+
+        else:
+            condition = st.selectbox("תנאי", ["שווה ל", "לא שווה ל", "מכיל", "לא מכיל", "לא ריק"])
+            value = st.text_input("ערך טקסטואלי לסינון")
+            if condition == "שווה ל":
+                df_filtered = df_filtered[df_filtered[selected_column] == value]
+            elif condition == "לא שווה ל":
+                df_filtered = df_filtered[df_filtered[selected_column] != value]
+            elif condition == "מכיל":
+                df_filtered = df_filtered[df_filtered[selected_column].astype(str).str.contains(value, na=False)]
+            elif condition == "לא מכיל":
+                df_filtered = df_filtered[~df_filtered[selected_column].astype(str).str.contains(value, na=False)]
+            elif condition == "לא ריק":
+                df_filtered = df_filtered[df_filtered[selected_column].notnull()]
+    
     if selected_gender:
         df_filtered = df_filtered[df_filtered['Gender'].isin(selected_gender)]
     if selected_project:
